@@ -1,68 +1,74 @@
-import React, { Component, createRef } from "react";
+import React, { Component, useEffect, useState } from "react";
 import Input from "./common/input";
-class LoginForm extends Component {
-  state = {
-    account: { username:"", password: "" },
-  };
+import { useNavigate } from 'react-router-dom';
+import config from './config.json';
 
-  //   username = React.createRef();
+const LoginForm = () => {
 
-  /* 
-  componentDidMount() {
-    this.username.current.focus();
-  } */
+    const [data, setData] = useState({username:"", password:""});
 
-  handleSubmit = (e) => {
-    e.preventDefault();
+    const [token, setToken] = useState(null);
 
-    //call the server
-    console.log("Submitted");
-  };
+    const navigate = useNavigate();
 
-  handleChange = ({ currentTarget: input }) => {
-    const account = { ...this.state.account };
-    account[input.name] = input.value;
-    this.setState({ account });
-  };
+    const setUser = (e) => {
+        setData({
+            ...data,
+            username: e.target.value
+        })
 
-  render() {
-    const { account } = this.state;
+    };
+
+    const setPassword = (e) => {
+        setData({
+            ...data,
+            password: e.target.value
+        })
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        fetch(`${config.api}/login`,{
+            method: 'post',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => setToken(data.user_token));
+
+    };
+    // console.log(data.user_token);
+
+    useEffect(()=>{
+        if(token){
+            localStorage.setItem('token', token);
+            navigate('/user-list');
+        }
+    }, [token]);
+
     return (
-      <div className="container mt-5">
-        <h1>Login Form</h1>
-        <form onSubmit={this.handleSubmit}>
-          <Input
-            name="username"
-            label="Username"
-            type="text"
-            value={account.username}
-            onChange={this.handleChange}
-          />
-          <Input
-            name="password"
-            label="Password"
-            type="password"
-            value={account.password}
-            onChange={this.handleChange}
-          />
-
-          {/* <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              value={account.password}
-              onChange={this.handleChange}
-              ref={this.password}
-              id="password"
-              name="password"
-              type="text"
-              className="form-control"
-            />
-          </div> */}
-          <button className="btn btn-primary mt-2">Login</button>
-        </form>
-      </div>
+        <div className="container mt-5">
+            <h1>Login Form</h1>
+            <form onSubmit={handleSubmit}>
+                <Input
+                    name="username"
+                    label="Username"
+                    type="text"
+                    onChange={(e)=>setUser(e)}
+                />
+                <Input
+                    name="password"
+                    label="Password"
+                    type="password"
+                    onChange={(e)=>setPassword(e)}
+                />
+                <button className="btn btn-primary mt-2">Login</button>
+            </form>
+        </div>
     );
-  }
 }
 
 export default LoginForm;
